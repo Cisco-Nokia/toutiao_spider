@@ -10,6 +10,7 @@ import html_downloader
 import html_parser
 import url_manager
 import result_processor
+from multiprocessing import Pool
 
 
 class SpiderMain(object):
@@ -19,13 +20,10 @@ class SpiderMain(object):
         self.parser = html_parser.HtmlParser()
         self.result_processor = result_processor.ResProcessor()
 
-    def craw(self):
+    def craw(self, offset):
         # 首先添加索引url，类似https://www.toutiao.com/search_content/?offset=0&format=json&keyword=%E8%A1%97%E6%8B%8D&autoload=true&count=20&cur_tab=3
-        # 控制爬取多少个索引页面，每个索引页面包含20条信息（由offset决定）
-        index_range = [ x * 20 for x in list(range(0, 5)) ]
         keyword = "街拍"
-        for offset in index_range:
-            self.urls.add_index_url(offset, keyword)
+        self.urls.add_index_url(offset, keyword)
         while self.urls.has_index_url():
             index_url = self.urls.get_index_url()
             print("开始对索引%s网页进行下载" % index_url)
@@ -47,5 +45,9 @@ class SpiderMain(object):
 
 
 if __name__ == "__main__":
+    # 控制爬取多少个索引页面，每个索引页面包含20条信息（由offset决定）
+    index_range = [x * 20 for x in list(range(0, 5))]
     spider_obj = SpiderMain()
-    spider_obj.craw()
+    # 多线程执行
+    pool = Pool()
+    pool.map(spider_obj.craw, index_range)
